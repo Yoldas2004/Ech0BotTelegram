@@ -1,4 +1,4 @@
-using FaturaHatirlatici.Bot.Handlers;
+
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
@@ -10,11 +10,11 @@ public class Worker(ILogger<Worker> logger, ITelegramBotClient botClient , IUpda
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
        var me = await botClient.GetMe(cancellationToken:stoppingToken);
-        logger.LogInformation($"Bot Calisiyo @me{me.Username}");
+        logger.LogInformation("Bot Working {@me}",me.Username);
         
         ReceiverOptions options = new ()
         {
-            AllowedUpdates =Array.Empty<UpdateType>()
+            AllowedUpdates = new[] {UpdateType.Message}
         };
         botClient.StartReceiving(updateHandler:handler,receiverOptions:options  , cancellationToken :stoppingToken);
 
