@@ -2,16 +2,18 @@
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
+using FaturaHatirlatici.Business.Services;
 
 namespace FaturaHatirlatici.Bot.Handlers;
 
 public class UpdateHandler : IUpdateHandler
 {
     private readonly ILogger<UpdateHandler> _logger;
-
-    public UpdateHandler(ILogger<UpdateHandler> logger)
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    public UpdateHandler(ILogger<UpdateHandler> logger, IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
     }
     public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
     {
@@ -21,6 +23,39 @@ public class UpdateHandler : IUpdateHandler
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
+        if (update.Message is not { } message)
+        {
+            return;
+        }
+        if (update.Message.Text is not { } messageText) 
+        {
+            return;
+        }
+        if (message.From is not { } from) { return; }
+        if (messageText == "/start")
+        {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+            bool isNewUser = await userService.RegisterAsync
+                (
+                  chatId : message.Chat.Id,
+                  telegramUserId: from.Id,
+                  name: from.FirstName,
+                  userName:from.Username
+                  
+                 
+                     );
+            if (isNewUser) 
+            {
+               await botClient.SendMessage(chatId:message.Chat.Id,"Welcome to EchoYol_Bot",cancellationToken:cancellationToken);
+            }
+            else
+            {
+                await botClient.SendMessage(chatId:message.Chat.Id,"Welcome back dear user",cancellationToken:cancellationToken);
+            }
+           return;
+        }
         if (update.Message == null)
         {
             return;
@@ -30,7 +65,7 @@ public class UpdateHandler : IUpdateHandler
 
             return;
         }
-        await botClient.SendMessage(update.Message.Chat.Id, update.Message.Text, cancellationToken:cancellationToken);
+        await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken:cancellationToken);
     
     }
 }

@@ -12,6 +12,11 @@ namespace FaturaHatirlatici.Data
         {
             
         }
-     public DbSet<BotUser> BotUsers { get; set; }   
+     public DbSet<BotUser> BotUsers { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<BotUser>().HasIndex(x=>x.TelegramUserId).IsUnique();
+        }
     }
 }
