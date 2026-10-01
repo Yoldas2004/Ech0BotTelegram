@@ -26,7 +26,7 @@ namespace FaturaHatirlatici.Business.Services
             {
                 
                 ChatId = chatId,
-                Firstname = name,
+                FirstName = name,
                 TelegramUserId = telegramUserId,
                  Username = userName,
                  CreatedAt = DateTime.UtcNow,

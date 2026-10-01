@@ -39,33 +39,22 @@ public class UpdateHandler : IUpdateHandler
 
             bool isNewUser = await userService.RegisterAsync
                 (
-                  chatId : message.Chat.Id,
+                  chatId: message.Chat.Id,
                   telegramUserId: from.Id,
                   name: from.FirstName,
-                  userName:from.Username
-                  
-                 
+                  userName: from.Username
+
+
                      );
-            if (isNewUser) 
+            if (isNewUser)
             {
-               await botClient.SendMessage(chatId:message.Chat.Id,"Welcome to EchoYol_Bot",cancellationToken:cancellationToken);
+                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome to EchoYol_Bot", cancellationToken: cancellationToken);
             }
             else
             {
-                await botClient.SendMessage(chatId:message.Chat.Id,"Welcome back dear user",cancellationToken:cancellationToken);
+                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome back dear user", cancellationToken: cancellationToken);
             }
-           return;
-        }
-        if (update.Message == null)
-        {
             return;
         }
-        if (string.IsNullOrWhiteSpace(update.Message.Text))
-        {
-
-            return;
-        }
-        await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken:cancellationToken);
-    
     }
 }
