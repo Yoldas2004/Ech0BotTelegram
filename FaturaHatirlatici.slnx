@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FaturaHatirlatici.Bot/FaturaHatirlatici.Bot.csproj" />
+  <Project Path="FaturaHatirlatici.Business/FaturaHatirlatici.Business.csproj" />
+  <Project Path="FaturaHatirlatici.Data/FaturaHatirlatici.Data.csproj" />
+</Solution>

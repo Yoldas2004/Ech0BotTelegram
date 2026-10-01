@@ -312,7 +312,9 @@ node_modules/
 # Visual Studio 6 technical files
 *.ncb
 *.aps
-
+*.db
+*.db-shm
+*.db-wal
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
 **/*.DesktopClient/GeneratedArtifacts
