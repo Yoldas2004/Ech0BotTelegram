@@ -282,7 +282,7 @@ ServiceFabricBackup/
 *- [Bb]ackup.rdl
 *- [Bb]ackup ([0-9]).rdl
 *- [Bb]ackup ([0-9][0-9]).rdl
-
+*.obsidian/
 # Microsoft Fakes
 FakesAssemblies/
 
@@ -295,7 +295,7 @@ node_modules/
 
 # Visual Studio 6 build log
 *.plg
-
+*.db-journal
 # Visual Studio 6 workspace options file
 *.opt
 

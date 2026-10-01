@@ -56,15 +56,7 @@ public class UpdateHandler : IUpdateHandler
             }
            return;
         }
-        if (update.Message == null)
-        {
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(update.Message.Text))
-        {
-
-            return;
-        }
+        
         await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken:cancellationToken);
     
     }
