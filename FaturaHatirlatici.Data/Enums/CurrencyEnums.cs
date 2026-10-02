@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FaturaHatirlatici.Data
+namespace FaturaHatirlatici.Data.Enums
 {
     public  enum Currency
     {
