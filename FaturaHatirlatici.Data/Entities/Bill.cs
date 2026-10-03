@@ -10,7 +10,7 @@ namespace FaturaHatirlatici.Data.Entities
         public int Id { get; set; }
         public int BotUserId { get; set; }
         public BotUser BotUser { get; set; } = null!;
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; }= string.Empty ;
         public decimal Amount { get; set; }
         public DateTime CreatedAt { get; set; }
         public int DueDay { get; set; } 
