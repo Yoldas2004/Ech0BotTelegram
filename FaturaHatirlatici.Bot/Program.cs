@@ -25,6 +25,7 @@ else
 
 builder.Services.AddSingleton<ITelegramBotClient>(sp => new TelegramBotClient(tokenString));
 builder.Services.AddSingleton<IUpdateHandler,UpdateHandler>();
+builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddScoped<IUserService, UserService>();
 
