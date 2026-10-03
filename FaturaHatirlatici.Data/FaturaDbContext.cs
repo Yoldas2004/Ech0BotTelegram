@@ -18,6 +18,7 @@ namespace FaturaHatirlatici.Data
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<BotUser>().HasIndex(x=>x.TelegramUserId).IsUnique();
+           
             modelBuilder.Entity<Bill>().HasOne(x=> x.BotUser).WithMany().HasForeignKey(x=>x.BotUserId).OnDelete(DeleteBehavior.Cascade);
             //modelBuilder.Entity<Bill>().Property(x => x.Title).HasMaxLength(100);
         }
