@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FaturaHatirlatici.Data.Migrations
 {
     [DbContext(typeof(FaturaDbContext))]
-    [Migration("20261003084000_AddBills")]
+    [Migration("20261003090104_AddBills")]
     partial class AddBills
     {
         /// <inheritdoc />
@@ -40,6 +40,7 @@ namespace FaturaHatirlatici.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

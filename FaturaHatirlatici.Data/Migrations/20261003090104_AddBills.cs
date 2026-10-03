@@ -18,7 +18,7 @@ namespace FaturaHatirlatici.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     BotUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Amount = table.Column<decimal>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     DueDay = table.Column<int>(type: "INTEGER", nullable: false)
