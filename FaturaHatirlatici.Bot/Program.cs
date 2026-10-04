@@ -1,4 +1,5 @@
 using FaturaHatirlatici.Bot;
+using FaturaHatirlatici.Bot.BotServices;
 using FaturaHatirlatici.Bot.Handlers;
 using FaturaHatirlatici.Business.Services;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ builder.Services.AddSingleton<IUpdateHandler,UpdateHandler>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IConversationService, ConversationService>();
 
 var host = builder.Build();
 host.Run();
