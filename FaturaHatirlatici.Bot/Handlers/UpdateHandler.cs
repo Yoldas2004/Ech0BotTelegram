@@ -5,7 +5,7 @@ using Telegram.Bot.Polling;
 using FaturaHatirlatici.Business.Services;
 using FaturaHatirlatici.Bot.BotServices;
 using FaturaHatirlatici.Bot.Conversations;
-
+using System.Globalization;
 namespace FaturaHatirlatici.Bot.Handlers;
 
 public class UpdateHandler : IUpdateHandler
@@ -13,7 +13,7 @@ public class UpdateHandler : IUpdateHandler
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IConversationService _conversationService;
-    public UpdateHandler(ILogger<UpdateHandler> logger, IServiceScopeFactory serviceScopeFactory,IConversationService conversationService)
+    public UpdateHandler(ILogger<UpdateHandler> logger, IServiceScopeFactory serviceScopeFactory, IConversationService conversationService)
     {
         _conversationService = conversationService;
         _logger = logger;
@@ -31,7 +31,7 @@ public class UpdateHandler : IUpdateHandler
         {
             return;
         }
-        if (update.Message.Text is not { } messageText) 
+        if (update.Message.Text is not { } messageText)
         {
             return;
         }
@@ -43,35 +43,91 @@ public class UpdateHandler : IUpdateHandler
 
             bool isNewUser = await userService.RegisterAsync
                 (
-                  chatId : message.Chat.Id,
+                  chatId: message.Chat.Id,
                   telegramUserId: from.Id,
                   name: from.FirstName,
-                  userName:from.Username
-                  
-                 
+                  userName: from.Username
+
+
                      );
-            if (isNewUser) 
+            if (isNewUser)
             {
-               await botClient.SendMessage(chatId:message.Chat.Id,"Welcome to EchoYol_Bot",cancellationToken:cancellationToken);
+                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome to EchoYol_Bot", cancellationToken: cancellationToken);
             }
             else
             {
-                await botClient.SendMessage(chatId:message.Chat.Id,"Welcome back dear user",cancellationToken:cancellationToken);
+                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome back dear user", cancellationToken: cancellationToken);
             }
-           return;
-        }
-        if (messageText =="/add")
-        {
-            var state = new ConversationState();
-
-              _conversationService.SaveConversation(from.Id, state);
-
-            await botClient.SendMessage(chatId:message.Chat.Id, "What is the name on your invoice?",cancellationToken:cancellationToken);
             return;
         }
-        
-        
-        await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken:cancellationToken);
-    
+        if (messageText == "/add")
+        {
+            var stateConversation = new ConversationState();
+
+            _conversationService.SaveConversation(from.Id, stateConversation);
+
+            await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
+            return;
+        }
+        var state = _conversationService.GetConversation(from.Id);
+        if (state != null)
+        {
+
+
+            switch (state.ConversationStep)
+            {
+                case ConversationStep.AwaitingName:
+                    state.Name = messageText; state.ConversationStep = ConversationStep.AwaitingAmount; _conversationService.SaveConversation(from.Id, state);
+                    await botClient.SendMessage(chatId: message.Chat.Id,
+                    "How Much Is It?", cancellationToken: cancellationToken);
+                    return;
+                case ConversationStep.AwaitingAmount:
+                    CultureInfo trCulture = new CultureInfo("tr-TR");
+                    if (decimal.TryParse(messageText, NumberStyles.Number, trCulture, out decimal parsedAmount) && parsedAmount > 0&& !messageText.Contains('.'))
+                    {
+                        state.Amount = parsedAmount;
+                        state.ConversationStep = ConversationStep.AwaitingDueDay;
+                        _conversationService.SaveConversation(from.Id, state);
+                        
+                        
+
+                        await botClient.SendMessage(chatId: message.Chat.Id, "What is The Due Day", cancellationToken: cancellationToken);
+                    }
+                    else
+                    {
+                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid amount etc[400,43]", cancellationToken: cancellationToken);
+                    }
+                    return;
+                case ConversationStep.AwaitingDueDay:
+                    if (int.TryParse(messageText, out var result) && result <= 31 && result >= 1)
+                    {
+                        using var scope2 = _serviceScopeFactory.CreateScope();
+
+                        var bills = scope2.ServiceProvider.GetRequiredService<IBillService>();
+                        bool isThis = await bills.AddBillAsync(from.Id, state.Name!, state.Amount.Value, result);
+                        _conversationService.DeleteConversation(from.Id);
+                        if (isThis)
+                        {
+                            await botClient.SendMessage(chatId:message.Chat.Id, "✅ Saved..",cancellationToken:cancellationToken) ;
+                        }
+                        else
+                        {
+                            await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
+
+                        }
+                    }
+                    else
+                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a day between 1 and 31", cancellationToken: cancellationToken);
+                    return;
+                default:
+                    break;
+            }
+
+
+        }
+
+
+        await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken: cancellationToken);
+
     }
 }
