@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FaturaHatirlatici.Data.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +13,7 @@ namespace FaturaHatirlatici.Data.Entities
         public string? FirstName { get; set; }
         public string? Username { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
     
     }
 }
