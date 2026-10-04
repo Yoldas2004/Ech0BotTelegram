@@ -3,6 +3,8 @@ using Telegram.Bot.Types;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using FaturaHatirlatici.Business.Services;
+using FaturaHatirlatici.Bot.BotServices;
+using FaturaHatirlatici.Bot.Conversations;
 
 namespace FaturaHatirlatici.Bot.Handlers;
 
@@ -10,8 +12,10 @@ public class UpdateHandler : IUpdateHandler
 {
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    public UpdateHandler(ILogger<UpdateHandler> logger, IServiceScopeFactory serviceScopeFactory)
+    private readonly IConversationService _conversationService;
+    public UpdateHandler(ILogger<UpdateHandler> logger, IServiceScopeFactory serviceScopeFactory,IConversationService conversationService)
     {
+        _conversationService = conversationService;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
     }
@@ -56,6 +60,16 @@ public class UpdateHandler : IUpdateHandler
             }
            return;
         }
+        if (messageText =="/add")
+        {
+            var state = new ConversationState();
+
+              _conversationService.SaveConversation(from.Id, state);
+
+            await botClient.SendMessage(chatId:message.Chat.Id, "What is the name on your invoice?",cancellationToken:cancellationToken);
+            return;
+        }
+        
         
         await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken:cancellationToken);
     
