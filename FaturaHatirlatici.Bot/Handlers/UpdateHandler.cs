@@ -62,10 +62,19 @@ public class UpdateHandler : IUpdateHandler
         }
         if (messageText == "/add")
         {
+           
+            using var scope = _serviceScopeFactory.CreateScope();
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            bool isUser = await userService.IsRegisteredAsync(from.Id);
+            if (!isUser)
+            {
+               await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
+                return;
+            }
             var stateConversation = new ConversationState();
-
             _conversationService.SaveConversation(from.Id, stateConversation);
 
+          
             await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
             return;
         }
@@ -75,7 +84,7 @@ public class UpdateHandler : IUpdateHandler
 
             await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
             _conversationService.DeleteConversation(from.Id);
-
+            return;
         }
         var state = _conversationService.GetConversation(from.Id);
         if (state != null)
