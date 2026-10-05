@@ -13,6 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="Rask.SQLite.Browser" Version="0.23.0" />
     <PackageReference Include="Telegram.Bot" Version="22.10.3.1" />
   </ItemGroup>
 

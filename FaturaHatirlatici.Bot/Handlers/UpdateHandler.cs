@@ -69,6 +69,14 @@ public class UpdateHandler : IUpdateHandler
             await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
             return;
         }
+        if (messageText == "/cancel")
+        {
+           
+
+            await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
+            _conversationService.DeleteConversation(from.Id);
+
+        }
         var state = _conversationService.GetConversation(from.Id);
         if (state != null)
         {
@@ -122,9 +130,11 @@ public class UpdateHandler : IUpdateHandler
                 default:
                     break;
             }
+            
 
 
         }
+      
 
 
         await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken: cancellationToken);
