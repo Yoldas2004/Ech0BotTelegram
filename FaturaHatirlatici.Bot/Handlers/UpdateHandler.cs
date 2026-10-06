@@ -25,7 +25,7 @@ public class UpdateHandler : IUpdateHandler
         return Task.CompletedTask;
     }
 
-    public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    public async Task HandleStartAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { } message)
         {
@@ -36,8 +36,7 @@ public class UpdateHandler : IUpdateHandler
             return;
         }
         if (message.From is not { } from) { return; }
-        if (messageText == "/start")
-        {
+        
             using var scope = _serviceScopeFactory.CreateScope();
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
@@ -59,32 +58,87 @@ public class UpdateHandler : IUpdateHandler
                 await botClient.SendMessage(chatId: message.Chat.Id, "Welcome back dear user", cancellationToken: cancellationToken);
             }
             return;
-        }
-        if (messageText == "/add")
+        
+    }
+    public async Task HandleAddAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        if (update.Message is not { } message)
         {
-           
+            return;
+        }
+        if (update.Message.Text is not { } messageText)
+        {
+            return;
+        }
+        if (message.From is not { } from) { return; }
+
+       
+
             using var scope = _serviceScopeFactory.CreateScope();
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
             bool isUser = await userService.IsRegisteredAsync(from.Id);
             if (!isUser)
             {
-               await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
+                await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
                 return;
             }
             var stateConversation = new ConversationState();
             _conversationService.SaveConversation(from.Id, stateConversation);
 
-          
+
             await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
             return;
-        }
-        if (messageText == "/cancel")
-        {
-           
+        
 
-            await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
-            _conversationService.DeleteConversation(from.Id);
+    }
+    public async Task HandleCancelAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        if (update.Message is not { } message)
+        {
             return;
+        }
+        if (update.Message.Text is not { } messageText)
+        {
+            return;
+        }
+        if (message.From is not { } from) { return; }
+
+        await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
+        _conversationService.DeleteConversation(from.Id);
+        return;
+
+
+    }
+    public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        if (update.Message is not { } message)
+        {
+            return;
+        }
+        if (update.Message.Text is not { } messageText)
+        {
+            return;
+        }
+        if (message.From is not { } from) { return; }
+        if (messageText == "/start")
+        { 
+            await HandleStartAsync(botClient, update, cancellationToken);
+            return;
+        }
+
+
+            if (messageText == "/add")
+        {
+            await HandleAddAsync(botClient, update, cancellationToken);
+            return;
+        }
+
+            if (messageText == "/cancel")
+        {
+           await HandleCancelAsync(botClient, update, cancellationToken);
+            return;
+
+           
         }
         var state = _conversationService.GetConversation(from.Id);
         if (state != null)
