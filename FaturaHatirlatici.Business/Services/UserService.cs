@@ -14,7 +14,15 @@ namespace FaturaHatirlatici.Business.Services
         {
              _faturaDbContext = faturaDbContext;
         }
-
+        public async Task<bool> IsRegisteredAsync(long telegramUserId)
+        {
+            bool isUseBot = await _faturaDbContext.BotUsers.AnyAsync(x => x.TelegramUserId == telegramUserId);
+            if (!isUseBot) 
+            {
+                return false;
+            }
+            return true;
+        }
         public async Task<bool> RegisterAsync(long chatId, long telegramUserId, string? name, string? userName) 
         {
            bool isThere = await  _faturaDbContext.BotUsers.AnyAsync(x=> x.TelegramUserId == telegramUserId);

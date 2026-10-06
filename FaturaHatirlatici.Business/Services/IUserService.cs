@@ -8,6 +8,7 @@ namespace FaturaHatirlatici.Business.Services
     public interface IUserService
     {
         Task<bool> RegisterAsync(long chatId ,long telegramUserId, string? name , string? userName);
+        Task<bool> IsRegisteredAsync(long telegramUserId);    
 
     }
 }
