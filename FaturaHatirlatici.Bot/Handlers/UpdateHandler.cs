@@ -94,6 +94,21 @@ public class UpdateHandler : IUpdateHandler
             switch (state.ConversationStep)
             {
                 case ConversationStep.AwaitingName:
+                    if (string.IsNullOrWhiteSpace(messageText))
+                    {
+                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
+                        return;
+                    }
+                    if (messageText.Length > 100)
+                    {
+                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name less than 100", cancellationToken: cancellationToken);
+                        return;
+                    }
+                    if (messageText.StartsWith('/'))
+                    {
+                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
+                        return;
+                    }
                     state.Name = messageText; state.ConversationStep = ConversationStep.AwaitingAmount; _conversationService.SaveConversation(from.Id, state);
                     await botClient.SendMessage(chatId: message.Chat.Id,
                     "How Much Is It?", cancellationToken: cancellationToken);
@@ -126,6 +141,7 @@ public class UpdateHandler : IUpdateHandler
                         if (isThis)
                         {
                             await botClient.SendMessage(chatId:message.Chat.Id, "✅ Saved..",cancellationToken:cancellationToken) ;
+
                         }
                         else
                         {
