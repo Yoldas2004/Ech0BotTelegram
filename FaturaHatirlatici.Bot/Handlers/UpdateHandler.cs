@@ -25,17 +25,9 @@ public class UpdateHandler : IUpdateHandler
         return Task.CompletedTask;
     }
 
-    public async Task HandleStartAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task HandleStartAsync(ITelegramBotClient botClient, Message message,User from, CancellationToken cancellationToken)
     {
-        if (update.Message is not { } message)
-        {
-            return;
-        }
-        if (update.Message.Text is not { } messageText)
-        {
-            return;
-        }
-        if (message.From is not { } from) { return; }
+        
         
             using var scope = _serviceScopeFactory.CreateScope();
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -60,17 +52,9 @@ public class UpdateHandler : IUpdateHandler
             return;
         
     }
-    public async Task HandleAddAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task HandleAddAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
     {
-        if (update.Message is not { } message)
-        {
-            return;
-        }
-        if (update.Message.Text is not { } messageText)
-        {
-            return;
-        }
-        if (message.From is not { } from) { return; }
+         
 
        
 
@@ -91,20 +75,13 @@ public class UpdateHandler : IUpdateHandler
         
 
     }
-    public async Task HandleCancelAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task HandleCancelAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
     {
-        if (update.Message is not { } message)
-        {
-            return;
-        }
-        if (update.Message.Text is not { } messageText)
-        {
-            return;
-        }
-        if (message.From is not { } from) { return; }
+       
 
         await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
         _conversationService.DeleteConversation(from.Id);
+        
         return;
 
 
@@ -122,20 +99,20 @@ public class UpdateHandler : IUpdateHandler
         if (message.From is not { } from) { return; }
         if (messageText == "/start")
         { 
-            await HandleStartAsync(botClient, update, cancellationToken);
+            await HandleStartAsync(botClient, message:message,from:from, cancellationToken);
             return;
         }
 
 
             if (messageText == "/add")
         {
-            await HandleAddAsync(botClient, update, cancellationToken);
+            await HandleAddAsync(botClient, message: message, from: from, cancellationToken);
             return;
         }
 
             if (messageText == "/cancel")
         {
-           await HandleCancelAsync(botClient, update, cancellationToken);
+           await HandleCancelAsync(botClient, message: message, from: from, cancellationToken);
             return;
 
            
@@ -163,6 +140,7 @@ public class UpdateHandler : IUpdateHandler
                         await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
                         return;
                     }
+                    
                     state.Name = messageText; state.ConversationStep = ConversationStep.AwaitingAmount; _conversationService.SaveConversation(from.Id, state);
                     await botClient.SendMessage(chatId: message.Chat.Id,
                     "How Much Is It?", cancellationToken: cancellationToken);
