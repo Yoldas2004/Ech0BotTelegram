@@ -1,5 +1,4 @@
-﻿
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using FaturaHatirlatici.Business.Services;
@@ -86,6 +85,51 @@ public class UpdateHandler : IUpdateHandler
 
 
     }
+    private async Task HandleAmountAsync(ITelegramBotClient botClient, Update update, Message message, User from, CancellationToken cancellationToken)
+    {
+        var messageText = update.Message.Text;
+        var state = _conversationService.GetConversation(from.Id);
+        CultureInfo trCulture = new CultureInfo("tr-TR");
+        if (decimal.TryParse(messageText, NumberStyles.Number, trCulture, out decimal parsedAmount) && parsedAmount > 0 && !messageText.Contains('.'))
+        {
+            state.Amount = parsedAmount;
+            state.ConversationStep = ConversationStep.AwaitingDueDay;
+            _conversationService.SaveConversation(from.Id, state);
+
+
+
+            await botClient.SendMessage(chatId: message.Chat.Id, "What is The Due Day", cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid amount etc[400,43]", cancellationToken: cancellationToken);
+        }
+        return;
+    }
+    private async Task HandleAwaitingNameAsync(ITelegramBotClient botClient,Update update, Message message, User from ,CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(update.Message.Text))
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
+            return;
+        }
+        if (update.Message.Text.Length > 100)
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name less than 100", cancellationToken: cancellationToken);
+            return;
+        }
+        if (update.Message.Text.StartsWith('/'))
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
+            return;
+        }
+        var state = _conversationService.GetConversation(from.Id);
+        state.Name = update.Message.Text; state.ConversationStep = ConversationStep.AwaitingAmount; _conversationService.SaveConversation(from.Id, state);
+        await botClient.SendMessage(chatId: message.Chat.Id,
+        "How Much Is It?", cancellationToken: cancellationToken);
+        return;
+
+    }
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { } message)
@@ -125,43 +169,10 @@ public class UpdateHandler : IUpdateHandler
             switch (state.ConversationStep)
             {
                 case ConversationStep.AwaitingName:
-                    if (string.IsNullOrWhiteSpace(messageText))
-                    {
-                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
-                        return;
-                    }
-                    if (messageText.Length > 100)
-                    {
-                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name less than 100", cancellationToken: cancellationToken);
-                        return;
-                    }
-                    if (messageText.StartsWith('/'))
-                    {
-                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid name", cancellationToken: cancellationToken);
-                        return;
-                    }
-                    
-                    state.Name = messageText; state.ConversationStep = ConversationStep.AwaitingAmount; _conversationService.SaveConversation(from.Id, state);
-                    await botClient.SendMessage(chatId: message.Chat.Id,
-                    "How Much Is It?", cancellationToken: cancellationToken);
+                    HandleAwaitingNameAsync(botClient, update, message, from, cancellationToken);
                     return;
                 case ConversationStep.AwaitingAmount:
-                    CultureInfo trCulture = new CultureInfo("tr-TR");
-                    if (decimal.TryParse(messageText, NumberStyles.Number, trCulture, out decimal parsedAmount) && parsedAmount > 0&& !messageText.Contains('.'))
-                    {
-                        state.Amount = parsedAmount;
-                        state.ConversationStep = ConversationStep.AwaitingDueDay;
-                        _conversationService.SaveConversation(from.Id, state);
-                        
-                        
-
-                        await botClient.SendMessage(chatId: message.Chat.Id, "What is The Due Day", cancellationToken: cancellationToken);
-                    }
-                    else
-                    {
-                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a valid amount etc[400,43]", cancellationToken: cancellationToken);
-                    }
-                    return;
+                  
                 case ConversationStep.AwaitingDueDay:
                     if (int.TryParse(messageText, out var result) && result <= 31 && result >= 1)
                     {
