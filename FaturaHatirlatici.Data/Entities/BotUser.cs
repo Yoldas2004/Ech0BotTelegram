@@ -12,6 +12,7 @@ namespace FaturaHatirlatici.Data.Entities
         public string? FirstName { get; set; }
         public string? Username { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
     
     }
 }

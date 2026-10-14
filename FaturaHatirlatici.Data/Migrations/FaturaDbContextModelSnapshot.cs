@@ -17,6 +17,36 @@ namespace FaturaHatirlatici.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("FaturaHatirlatici.Data.Entities.Bill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("BotUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DueDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BotUserId");
+
+                    b.ToTable("Bills");
+                });
+
             modelBuilder.Entity("FaturaHatirlatici.Data.Entities.BotUser", b =>
                 {
                     b.Property<int>("Id")
@@ -44,6 +74,17 @@ namespace FaturaHatirlatici.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("BotUsers");
+                });
+
+            modelBuilder.Entity("FaturaHatirlatici.Data.Entities.Bill", b =>
+                {
+                    b.HasOne("FaturaHatirlatici.Data.Entities.BotUser", "BotUser")
+                        .WithMany()
+                        .HasForeignKey("BotUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BotUser");
                 });
 #pragma warning restore 612, 618
         }
