@@ -1,10 +1,11 @@
-﻿using Telegram.Bot.Types;
+﻿using FaturaHatirlatici.Bot.BotServices;
+using FaturaHatirlatici.Bot.Conversations;
+using FaturaHatirlatici.Business.Services;
+using System.Globalization;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
-using FaturaHatirlatici.Business.Services;
-using FaturaHatirlatici.Bot.BotServices;
-using FaturaHatirlatici.Bot.Conversations;
-using System.Globalization;
+using Telegram.Bot.Types;
+//using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 namespace FaturaHatirlatici.Bot.Handlers;
 
 public class UpdateHandler : IUpdateHandler
@@ -85,7 +86,7 @@ public class UpdateHandler : IUpdateHandler
 
 
     }
-    private async Task HandleAmountAsync(ITelegramBotClient botClient, Update update, Message message, User from, CancellationToken cancellationToken)
+    private async Task HandleAwaitingAmountAsync(ITelegramBotClient botClient, Update update, Message message, User from, CancellationToken cancellationToken)
     {
         var messageText = update.Message.Text;
         var state = _conversationService.GetConversation(from.Id);
@@ -130,6 +131,32 @@ public class UpdateHandler : IUpdateHandler
         return;
 
     }
+    private async Task HandleAwaitingDueDayAsync(ITelegramBotClient botClient, Update update, Message message, User from, CancellationToken cancellationToken)
+    {
+        var messageText = update.Message.Text;
+        var state = _conversationService.GetConversation(from.Id);
+        if (int.TryParse(messageText, out var result) && result <= 31 && result >= 1)
+        {
+            using var scope2 = _serviceScopeFactory.CreateScope();
+
+            var bills = scope2.ServiceProvider.GetRequiredService<IBillService>();
+            bool isThis = await bills.AddBillAsync(from.Id, state.Name!, state.Amount.Value, result);
+            _conversationService.DeleteConversation(from.Id);
+            if (isThis)
+            {
+                await botClient.SendMessage(chatId: message.Chat.Id, "✅ Saved..", cancellationToken: cancellationToken);
+
+            }
+            else
+            {
+                await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
+
+            }
+        }
+        else
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a day between 1 and 31", cancellationToken: cancellationToken);
+        return;
+    }
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { } message)
@@ -169,31 +196,13 @@ public class UpdateHandler : IUpdateHandler
             switch (state.ConversationStep)
             {
                 case ConversationStep.AwaitingName:
-                    HandleAwaitingNameAsync(botClient, update, message, from, cancellationToken);
+                 await   HandleAwaitingNameAsync(botClient, update, message, from, cancellationToken);
                     return;
                 case ConversationStep.AwaitingAmount:
-                  
+                    await HandleAwaitingAmountAsync(botClient, update, message, from, cancellationToken);
+                    return;
                 case ConversationStep.AwaitingDueDay:
-                    if (int.TryParse(messageText, out var result) && result <= 31 && result >= 1)
-                    {
-                        using var scope2 = _serviceScopeFactory.CreateScope();
-
-                        var bills = scope2.ServiceProvider.GetRequiredService<IBillService>();
-                        bool isThis = await bills.AddBillAsync(from.Id, state.Name!, state.Amount.Value, result);
-                        _conversationService.DeleteConversation(from.Id);
-                        if (isThis)
-                        {
-                            await botClient.SendMessage(chatId:message.Chat.Id, "✅ Saved..",cancellationToken:cancellationToken) ;
-
-                        }
-                        else
-                        {
-                            await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
-
-                        }
-                    }
-                    else
-                        await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a day between 1 and 31", cancellationToken: cancellationToken);
+                    await HandleAwaitingDueDayAsync(botClient, update, message, from, cancellationToken);
                     return;
                 default:
                     break;

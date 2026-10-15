@@ -14,6 +14,22 @@ namespace FaturaHatirlatici.Business.Services
         {
             _context = context;
         }
+        public async Task<List<Bill>> GetBillsAsync(long telegramUserId)
+        {
+            var finder = await _context.BotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
+            if (finder == null)
+            {
+                return [];
+            }
+             
+
+            return  (await _context.Bills.Where(x => x. BotUserId  == finder.Id).OrderBy(x => x.DueDay).ThenBy(x => x.Id).ToListAsync());
+
+            
+
+
+        }
+
         public async Task<bool> AddBillAsync(long telegramUserId, string title, decimal amount, int day)
         {
             var findUser = await _context.BotUsers.FirstOrDefaultAsync(x=>x.TelegramUserId == telegramUserId);
