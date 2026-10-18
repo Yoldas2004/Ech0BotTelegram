@@ -2,6 +2,7 @@
 using FaturaHatirlatici.Bot.Conversations;
 using FaturaHatirlatici.Business.Services;
 using System.Globalization;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -25,63 +26,63 @@ public class UpdateHandler : IUpdateHandler
         return Task.CompletedTask;
     }
 
-    private async Task HandleStartAsync(ITelegramBotClient botClient, Message message,User from, CancellationToken cancellationToken)
+    private async Task HandleStartAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
     {
-        
-        
-            using var scope = _serviceScopeFactory.CreateScope();
-            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-
-            bool isNewUser = await userService.RegisterAsync
-                (
-                  chatId: message.Chat.Id,
-                  telegramUserId: from.Id,
-                  name: from.FirstName,
-                  userName: from.Username
 
 
-                     );
-            if (isNewUser)
-            {
-                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome to EchoYol_Bot", cancellationToken: cancellationToken);
-            }
-            else
-            {
-                await botClient.SendMessage(chatId: message.Chat.Id, "Welcome back dear user", cancellationToken: cancellationToken);
-            }
-            return;
-        
+        using var scope = _serviceScopeFactory.CreateScope();
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        bool isNewUser = await userService.RegisterAsync
+            (
+              chatId: message.Chat.Id,
+              telegramUserId: from.Id,
+              name: from.FirstName,
+              userName: from.Username
+
+
+                 );
+        if (isNewUser)
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Welcome to EchoYol_Bot", cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Welcome back dear user", cancellationToken: cancellationToken);
+        }
+        return;
+
     }
     private async Task HandleAddAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
     {
-         
-
-       
-
-            using var scope = _serviceScopeFactory.CreateScope();
-            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-            bool isUser = await userService.IsRegisteredAsync(from.Id);
-            if (!isUser)
-            {
-                await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
-                return;
-            }
-            var stateConversation = new ConversationState();
-            _conversationService.SaveConversation(from.Id, stateConversation);
 
 
-            await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
+
+
+        using var scope = _serviceScopeFactory.CreateScope();
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+        bool isUser = await userService.IsRegisteredAsync(from.Id);
+        if (!isUser)
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "Please /start first", cancellationToken: cancellationToken);
             return;
-        
+        }
+        var stateConversation = new ConversationState();
+        _conversationService.SaveConversation(from.Id, stateConversation);
+
+
+        await botClient.SendMessage(chatId: message.Chat.Id, "What is the name on your invoice?", cancellationToken: cancellationToken);
+        return;
+
 
     }
     private async Task HandleCancelAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
     {
-       
+
 
         await botClient.SendMessage(chatId: message.Chat.Id, "Good Bye " + message.Chat.Username, cancellationToken: cancellationToken);
         _conversationService.DeleteConversation(from.Id);
-        
+
         return;
 
 
@@ -107,7 +108,7 @@ public class UpdateHandler : IUpdateHandler
         }
         return;
     }
-    private async Task HandleAwaitingNameAsync(ITelegramBotClient botClient,Update update, Message message, User from ,CancellationToken cancellationToken)
+    private async Task HandleAwaitingNameAsync(ITelegramBotClient botClient, Update update, Message message, User from, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(update.Message.Text))
         {
@@ -157,6 +158,38 @@ public class UpdateHandler : IUpdateHandler
             await botClient.SendMessage(chatId: message.Chat.Id, "Please enter a day between 1 and 31", cancellationToken: cancellationToken);
         return;
     }
+    private async Task HandleListAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var userService= scope.ServiceProvider.GetRequiredService<IUserService>();
+        var billService = scope.ServiceProvider.GetRequiredService<IBillService>();
+        bool isUser = await userService.IsRegisteredAsync(from.Id);
+
+        if (!isUser) 
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id,"Please use /start first",cancellationToken:cancellationToken);
+            return;
+        }
+            var bills= await billService.GetBillsAsync(from.Id);
+        if (bills.Count ==0)
+        {
+            await botClient.SendMessage(chatId: message.Chat.Id, "There is nothing here!!", cancellationToken: cancellationToken);
+            return ;
+        }
+         
+         
+        var sb = new StringBuilder();
+        sb.AppendLine(" Bill  list:");
+        var cI = new CultureInfo("tr-TR");
+        for (int i = 0; i < bills.Count; i++)
+        {
+            sb.AppendLine($"{i+1}. Title - {bills[i].Title}\nAmount - {bills[i].Amount.ToString("N2",cI)}\nDue Day - {bills[i].DueDay}");
+        }
+
+        await botClient.SendMessage(chatId:message.Chat.Id,sb.ToString(),cancellationToken:cancellationToken);
+
+        
+      }
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { } message)
@@ -169,24 +202,29 @@ public class UpdateHandler : IUpdateHandler
         }
         if (message.From is not { } from) { return; }
         if (messageText == "/start")
-        { 
-            await HandleStartAsync(botClient, message:message,from:from, cancellationToken);
+        {
+            await HandleStartAsync(botClient, message: message, from: from, cancellationToken);
             return;
         }
 
 
-            if (messageText == "/add")
+        if (messageText == "/add")
         {
             await HandleAddAsync(botClient, message: message, from: from, cancellationToken);
             return;
         }
 
-            if (messageText == "/cancel")
+        if (messageText == "/cancel")
         {
-           await HandleCancelAsync(botClient, message: message, from: from, cancellationToken);
+            await HandleCancelAsync(botClient, message: message, from: from, cancellationToken);
             return;
 
-           
+
+        }
+        if(messageText =="/list")
+        {
+            await HandleListAsync(botClient, message, from, cancellationToken);
+            return;
         }
         var state = _conversationService.GetConversation(from.Id);
         if (state != null)
@@ -196,7 +234,7 @@ public class UpdateHandler : IUpdateHandler
             switch (state.ConversationStep)
             {
                 case ConversationStep.AwaitingName:
-                 await   HandleAwaitingNameAsync(botClient, update, message, from, cancellationToken);
+                    await HandleAwaitingNameAsync(botClient, update, message, from, cancellationToken);
                     return;
                 case ConversationStep.AwaitingAmount:
                     await HandleAwaitingAmountAsync(botClient, update, message, from, cancellationToken);
@@ -207,11 +245,11 @@ public class UpdateHandler : IUpdateHandler
                 default:
                     break;
             }
-            
+
 
 
         }
-      
+
 
 
         await botClient.SendMessage(message.Chat.Id, messageText, cancellationToken: cancellationToken);
