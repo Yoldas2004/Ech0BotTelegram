@@ -190,6 +190,27 @@ public class UpdateHandler : IUpdateHandler
 
         
       }
+    private async Task HandleDeleteAsync(ITelegramBotClient botClient, Message message, User from, CancellationToken cancellationToken)
+    { 
+    using var scope = _serviceScopeFactory.CreateScope();
+    var user = scope.ServiceProvider.GetRequiredService<IBillService>();
+        var parts = message.Text.Split(' ');
+        if (parts.Length != 2 || !int.TryParse(parts[1], out int num))
+        { 
+            await botClient.SendMessage(chatId:message.Chat.Id,"Usage /delete <num>",cancellationToken:cancellationToken);
+            return;
+        }
+        var bills = await user.GetBillsAsync(from.Id);
+        if (num < 1 || num > bills.Count)
+        {
+        await botClient.SendMessage(chatId: message.Chat.Id, $"No bill with number{num}", cancellationToken: cancellationToken);
+            return;
+        }
+        var bill = bills[num - 1];
+        await user.DeleteBillAsync(from.Id,bill.Id);
+        await botClient.SendMessage(chatId: message.Chat.Id,$"Deleted {bill.Title}", cancellationToken: cancellationToken);
+
+    }
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { } message)
@@ -224,6 +245,11 @@ public class UpdateHandler : IUpdateHandler
         if(messageText =="/list")
         {
             await HandleListAsync(botClient, message, from, cancellationToken);
+            return;
+        }
+        if (messageText.StartsWith( "/delete"))
+        {
+            await HandleDeleteAsync(botClient, message, from, cancellationToken);
             return;
         }
         var state = _conversationService.GetConversation(from.Id);
