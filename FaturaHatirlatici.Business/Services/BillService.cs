@@ -50,5 +50,21 @@ namespace FaturaHatirlatici.Business.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> DeleteBillAsync(long telegramUserId,int billId)
+        { 
+        var tUserFinder = await _context.BotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
+            if (tUserFinder == null)
+            {
+                return false;
+            }
+            var billIdFinder = await _context.Bills.FirstOrDefaultAsync(x=> x.Id == billId&& x.BotUserId==tUserFinder.Id);
+            if (billIdFinder == null)
+            {
+                return false;
+            }
+             _context.Remove(billIdFinder);
+           await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }
