@@ -2,4 +2,5 @@
   <Project Path="FaturaHatirlatici.Bot/FaturaHatirlatici.Bot.csproj" />
   <Project Path="FaturaHatirlatici.Business/FaturaHatirlatici.Business.csproj" />
   <Project Path="FaturaHatirlatici.Data/FaturaHatirlatici.Data.csproj" />
+  <Project Path="FaturaHatirlatici.Test/FaturaHatirlatici.Test.csproj" Id="ae98d984-994e-45de-a5ae-43c7ebbcd541" />
 </Solution>
