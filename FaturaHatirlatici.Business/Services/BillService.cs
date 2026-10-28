@@ -14,6 +14,22 @@ namespace FaturaHatirlatici.Business.Services
         {
             _context = context;
         }
+        public async Task<List<Bill>> GetBillsAsync(long telegramUserId)
+        {
+            var finder = await _context.BotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
+            if (finder == null)
+            {
+                return [];
+            }
+             
+
+            return  (await _context.Bills.Where(x => x. BotUserId  == finder.Id).OrderBy(x => x.DueDay).ThenBy(x => x.Id).ToListAsync());
+
+            
+
+
+        }
+
         public async Task<bool> AddBillAsync(long telegramUserId, string title, decimal amount, int day)
         {
             var findUser = await _context.BotUsers.FirstOrDefaultAsync(x=>x.TelegramUserId == telegramUserId);
@@ -32,6 +48,22 @@ namespace FaturaHatirlatici.Business.Services
             };
             _context.Bills.Add(billibilli);
             await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> DeleteBillAsync(long telegramUserId,int billId)
+        { 
+        var tUserFinder = await _context.BotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
+            if (tUserFinder == null)
+            {
+                return false;
+            }
+            var billIdFinder = await _context.Bills.FirstOrDefaultAsync(x=> x.Id == billId&& x.BotUserId==tUserFinder.Id);
+            if (billIdFinder == null)
+            {
+                return false;
+            }
+             _context.Remove(billIdFinder);
+           await _context.SaveChangesAsync();
             return true;
         }
     }
